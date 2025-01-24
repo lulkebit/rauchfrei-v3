@@ -32,9 +32,6 @@ public class AuthService {
             throw new RuntimeException("Email bereits registriert");
         }
 
-        // Debug-Logging
-        System.out.println("Received profile image: " + (request.getProfileImage() != null ? "not null" : "null"));
-
         User user = User.builder()
                 .email(request.getEmail())
                 .username(request.getUsername())

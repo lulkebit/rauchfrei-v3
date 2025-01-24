@@ -233,8 +233,6 @@ const Register = () => {
                 zigarettenProPackung: parseInt(formData.zigarettenProPackung),
             };
 
-            console.log('Sending request data:', requestData); // Debugging
-
             const response = await fetch(
                 'http://localhost:8080/api/auth/register',
                 {
