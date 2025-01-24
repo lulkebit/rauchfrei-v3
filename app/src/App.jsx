@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import Statistics from './components/Statistics';
 import Achievements from './components/Achievements';
+import Login from './components/Login';
 
 function App() {
     return (
@@ -25,6 +26,7 @@ function App() {
                             path='/achievements'
                             element={<Achievements />}
                         />
+                        <Route path='/login' element={<Login />} />
                     </Routes>
                 </div>
             </div>
