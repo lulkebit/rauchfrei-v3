@@ -12,6 +12,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -50,6 +53,21 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    @Column(name = "follower_count")
+    private Integer followerCount;
+
+    @Column(name = "following_count")
+    private Integer followingCount;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Achievement> achievements;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Activity> activities;
 
     @PrePersist
     protected void onCreate() {
