@@ -348,6 +348,13 @@ const Register = () => {
                                 accept='image/*'
                                 className='w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-400/10 file:text-emerald-400 hover:file:bg-emerald-400/20'
                             />
+                            <button
+                                type='button'
+                                onClick={handleSubmit}
+                                className='w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg transition-colors'
+                            >
+                                Registrieren
+                            </button>
                         </div>
                     </motion.div>
                 );
@@ -386,13 +393,7 @@ const Register = () => {
                         )}
                     </AnimatePresence>
 
-                    <form
-                        onSubmit={
-                            step === 4
-                                ? handleSubmit
-                                : (e) => e.preventDefault()
-                        }
-                    >
+                    <form onSubmit={(e) => e.preventDefault()}>
                         <AnimatePresence mode='wait'>
                             {renderStep()}
                         </AnimatePresence>
@@ -407,13 +408,15 @@ const Register = () => {
                                     Zurück
                                 </button>
                             )}
-                            <button
-                                type={step === 4 ? 'submit' : 'button'}
-                                onClick={step === 4 ? undefined : nextStep}
-                                className='ml-auto bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg transition-colors'
-                            >
-                                {step === 4 ? 'Registrieren' : 'Weiter'}
-                            </button>
+                            {step < 4 && (
+                                <button
+                                    type='button'
+                                    onClick={nextStep}
+                                    className='ml-auto bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg transition-colors'
+                                >
+                                    Weiter
+                                </button>
+                            )}
                         </div>
                     </form>
                 </div>
