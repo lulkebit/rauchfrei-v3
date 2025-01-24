@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import Statistics from './components/Statistics';
@@ -48,8 +49,22 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            <Route path='/login' element={<Login />} />
-                            <Route path='/register' element={<Register />} />
+                            <Route
+                                path='/login'
+                                element={
+                                    <RedirectIfAuthenticated>
+                                        <Login />
+                                    </RedirectIfAuthenticated>
+                                }
+                            />
+                            <Route
+                                path='/register'
+                                element={
+                                    <RedirectIfAuthenticated>
+                                        <Register />
+                                    </RedirectIfAuthenticated>
+                                }
+                            />
                         </Routes>
                     </div>
                 </div>
