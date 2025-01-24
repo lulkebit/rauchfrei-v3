@@ -1,8 +1,16 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     return (
         <nav className='relative h-20 overflow-hidden rounded-2xl shadow-xl bg-gray-800/50 border border-gray-700/20'>
@@ -36,12 +44,32 @@ const Navbar = () => {
 
                     {/* Desktop Navigation */}
                     <div className='hidden md:flex items-center space-x-8'>
-                        <NavLink href='/' text='Dashboard' />
-                        <NavLink href='/statistics' text='Statistiken' />
-                        <NavLink href='/achievements' text='Erfolge' />
-                        <NavLink href='/settings' text='Einstellungen' />
-                        <NavLink href='/login' text='Login' />
-                        <NavLink href='/register' text='Register' />
+                        {user ? (
+                            <>
+                                <NavLink href='/' text='Dashboard' />
+                                <NavLink
+                                    href='/statistics'
+                                    text='Statistiken'
+                                />
+                                <NavLink href='/achievements' text='Erfolge' />
+                                <div className='flex items-center space-x-4'>
+                                    <span className='text-emerald-400'>
+                                        {user.username}
+                                    </span>
+                                    <button
+                                        onClick={handleLogout}
+                                        className='text-gray-300 hover:text-emerald-400 transition-colors'
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <NavLink href='/login' text='Login' />
+                                <NavLink href='/register' text='Register' />
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -85,21 +113,36 @@ const Navbar = () => {
                 {isOpen && (
                     <div className='absolute top-full left-0 right-0 mt-2 md:hidden'>
                         <div className='mx-4 rounded-xl backdrop-blur-lg bg-gray-800/70 p-3 border border-gray-700/30 shadow-xl'>
-                            <MobileNavLink href='/' text='Dashboard' />
-                            <MobileNavLink
-                                href='/statistics'
-                                text='Statistiken'
-                            />
-                            <MobileNavLink
-                                href='/achievements'
-                                text='Erfolge'
-                            />
-                            <MobileNavLink
-                                href='/settings'
-                                text='Einstellungen'
-                            />
-                            <MobileNavLink href='/login' text='Login' />
-                            <MobileNavLink href='/register' text='Register' />
+                            {user ? (
+                                <>
+                                    <MobileNavLink href='/' text='Dashboard' />
+                                    <MobileNavLink
+                                        href='/statistics'
+                                        text='Statistiken'
+                                    />
+                                    <MobileNavLink
+                                        href='/achievements'
+                                        text='Erfolge'
+                                    />
+                                    <div className='px-4 py-2 text-emerald-400'>
+                                        {user.username}
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className='w-full text-left px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors'
+                                    >
+                                        Logout
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <MobileNavLink href='/login' text='Login' />
+                                    <MobileNavLink
+                                        href='/register'
+                                        text='Register'
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
