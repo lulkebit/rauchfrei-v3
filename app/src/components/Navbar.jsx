@@ -12,6 +12,14 @@ const Navbar = () => {
         navigate('/login');
     };
 
+    const defaultAvatar = (
+        <div className='w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center'>
+            <span className='text-emerald-400 text-sm font-medium'>
+                {user?.username?.charAt(0).toUpperCase()}
+            </span>
+        </div>
+    );
+
     return (
         <nav className='relative h-20 overflow-hidden rounded-2xl shadow-xl bg-gray-800/50 border border-gray-700/20'>
             {/* Glass Effect Container */}
@@ -54,9 +62,21 @@ const Navbar = () => {
                                 <NavLink href='/achievements' text='Erfolge' />
                                 <NavLink href='/profile' text='Profil' />
                                 <div className='flex items-center space-x-4'>
-                                    <span className='text-emerald-400'>
-                                        {user.username}
-                                    </span>
+                                    <div className='flex items-center space-x-3'>
+                                        {user.profileImage ? (
+                                            <img
+                                                src={user.profileImage}
+                                                alt={user.username}
+                                                className='w-8 h-8 rounded-full object-cover border border-emerald-500/30'
+                                            />
+                                        ) : (
+                                            defaultAvatar
+                                        )}
+                                        <span className='text-emerald-400'>
+                                            {user.username}
+                                        </span>
+                                    </div>
+
                                     <button
                                         onClick={handleLogout}
                                         className='text-gray-300 hover:text-emerald-400 transition-colors'
@@ -116,6 +136,20 @@ const Navbar = () => {
                         <div className='mx-4 rounded-xl backdrop-blur-lg bg-gray-800/70 p-3 border border-gray-700/30 shadow-xl'>
                             {user ? (
                                 <>
+                                    <div className='flex items-center space-x-3 px-4 py-2 border-b border-gray-700/30 mb-2'>
+                                        {user.profileImage ? (
+                                            <img
+                                                src={user.profileImage}
+                                                alt={user.username}
+                                                className='w-8 h-8 rounded-full object-cover border border-emerald-500/30'
+                                            />
+                                        ) : (
+                                            defaultAvatar
+                                        )}
+                                        <span className='text-emerald-400'>
+                                            {user.username}
+                                        </span>
+                                    </div>
                                     <MobileNavLink href='/' text='Dashboard' />
                                     <MobileNavLink
                                         href='/statistics'
@@ -129,9 +163,6 @@ const Navbar = () => {
                                         href='/profile'
                                         text='Profil'
                                     />
-                                    <div className='px-4 py-2 text-emerald-400'>
-                                        {user.username}
-                                    </div>
                                     <button
                                         onClick={handleLogout}
                                         className='w-full text-left px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors'

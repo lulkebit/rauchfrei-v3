@@ -32,13 +32,57 @@ const Register = () => {
         if (type === 'file') {
             const file = files[0];
             if (file) {
+                // Überprüfe die Dateigröße (5MB Limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    setErrors({
+                        ...errors,
+                        fields: {
+                            ...errors.fields,
+                            profileImage:
+                                'Die Datei darf nicht größer als 5MB sein',
+                        },
+                    });
+                    return;
+                }
+
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    setPreviewImage(reader.result);
-                    setFormData((prev) => ({
-                        ...prev,
-                        profileImage: reader.result,
-                    }));
+                    // Komprimiere das Bild vor dem Speichern
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressedDataUrl = canvas.toDataURL(
+                            'image/jpeg',
+                            0.5
+                        );
+                        setFormData((prev) => ({
+                            ...prev,
+                            profileImage: compressedDataUrl,
+                        }));
+                    };
+                    img.src = reader.result;
                 };
                 reader.readAsDataURL(file);
             }
@@ -113,6 +157,23 @@ const Register = () => {
                     newErrors.fields.zigarettenProTag =
                         'Bitte geben Sie eine realistische Anzahl an (1-100)';
                 }
+                if (!formData.preisProPackung) {
+                    newErrors.fields.preisProPackung =
+                        'Preis pro Packung ist erforderlich';
+                } else if (formData.preisProPackung <= 0) {
+                    newErrors.fields.preisProPackung =
+                        'Preis muss größer als 0 sein';
+                }
+                if (!formData.zigarettenProPackung) {
+                    newErrors.fields.zigarettenProPackung =
+                        'Zigaretten pro Packung ist erforderlich';
+                } else if (
+                    formData.zigarettenProPackung < 1 ||
+                    formData.zigarettenProPackung > 40
+                ) {
+                    newErrors.fields.zigarettenProPackung =
+                        'Bitte geben Sie eine realistische Anzahl an (1-40)';
+                }
                 break;
 
             case 4:
@@ -154,6 +215,26 @@ const Register = () => {
         try {
             const rauchfreiDate = new Date(formData.rauchfreiSeit);
 
+            // Profilbild-Konvertierung
+            let profileImageData = null;
+            if (formData.profileImage) {
+                // Wenn das Bild bereits ein Base64-String ist, verwenden wir es direkt
+                profileImageData = formData.profileImage;
+            }
+
+            const requestData = {
+                email: formData.email,
+                username: formData.username,
+                password: formData.password,
+                profileImage: profileImageData,
+                rauchfreiSeit: rauchfreiDate.toISOString(),
+                zigarettenProTag: parseInt(formData.zigarettenProTag),
+                preisProPackung: parseFloat(formData.preisProPackung),
+                zigarettenProPackung: parseInt(formData.zigarettenProPackung),
+            };
+
+            console.log('Sending request data:', requestData); // Debugging
+
             const response = await fetch(
                 'http://localhost:8080/api/auth/register',
                 {
@@ -161,20 +242,16 @@ const Register = () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        email: formData.email,
-                        username: formData.username,
-                        password: formData.password,
-                        profileImage: formData.profileImage,
-                        rauchfreiSeit: rauchfreiDate.toISOString(),
-                        zigarettenProTag: parseInt(formData.zigarettenProTag),
-                        preisProPackung: parseFloat(formData.preisProPackung),
-                        zigarettenProPackung: parseInt(
-                            formData.zigarettenProPackung
-                        ),
-                    }),
+                    body: JSON.stringify(requestData),
                 }
             );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                    errorData.message || 'Registrierung fehlgeschlagen'
+                );
+            }
 
             const data = await response.json();
 
@@ -320,6 +397,33 @@ const Register = () => {
                                     type='number'
                                     name='zigarettenProTag'
                                     value={formData.zigarettenProTag}
+                                    onChange={handleChange}
+                                    className='w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-4 py-3 text-gray-100 focus:ring-2 focus:ring-emerald-400/50 focus:border-transparent transition-all'
+                                    required
+                                />
+                            </div>
+                            <div className='relative'>
+                                <label className='block text-gray-300 mb-2 font-medium'>
+                                    Preis pro Packung (€)
+                                </label>
+                                <input
+                                    type='number'
+                                    step='0.01'
+                                    name='preisProPackung'
+                                    value={formData.preisProPackung}
+                                    onChange={handleChange}
+                                    className='w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-4 py-3 text-gray-100 focus:ring-2 focus:ring-emerald-400/50 focus:border-transparent transition-all'
+                                    required
+                                />
+                            </div>
+                            <div className='relative'>
+                                <label className='block text-gray-300 mb-2 font-medium'>
+                                    Zigaretten pro Packung
+                                </label>
+                                <input
+                                    type='number'
+                                    name='zigarettenProPackung'
+                                    value={formData.zigarettenProPackung}
                                     onChange={handleChange}
                                     className='w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-4 py-3 text-gray-100 focus:ring-2 focus:ring-emerald-400/50 focus:border-transparent transition-all'
                                     required

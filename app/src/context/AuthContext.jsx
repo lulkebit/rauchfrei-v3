@@ -9,9 +9,10 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
+        const profileImage = localStorage.getItem('profileImage');
 
         if (token && username) {
-            setUser({ username, token });
+            setUser({ username, token, profileImage });
         }
         setLoading(false);
     }, []);
@@ -20,12 +21,16 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         localStorage.setItem('token', userData.token);
         localStorage.setItem('username', userData.username);
+        if (userData.profileImage) {
+            localStorage.setItem('profileImage', userData.profileImage);
+        }
     };
 
     const logout = () => {
         setUser(null);
         localStorage.removeItem('token');
         localStorage.removeItem('username');
+        localStorage.removeItem('profileImage');
     };
 
     return (

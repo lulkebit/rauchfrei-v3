@@ -33,7 +33,7 @@ public class User {
     @Column(nullable = false)
     private String username;
 
-    @Column(name = "profile_image")
+    @Column(name = "profile_image", columnDefinition = "TEXT")
     private String profileImage;
 
     @Column(name = "rauchfrei_seit")

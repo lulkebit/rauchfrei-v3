@@ -9,23 +9,41 @@ import de.luke.rauchfrei.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+
+    private String formatProfileImage(String profileImage) {
+        if (profileImage == null) return null;
+        if (profileImage.startsWith("data:image")) {
+            return profileImage;
+        }
+        return "data:image/jpeg;base64," + profileImage;
+    }
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email bereits registriert");
         }
 
+        // Debug-Logging
+        System.out.println("Received profile image: " + (request.getProfileImage() != null ? "not null" : "null"));
+
         User user = User.builder()
                 .email(request.getEmail())
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .profileImage(request.getProfileImage())
+                .rauchfreiSeit(request.getRauchfreiSeit())
+                .zigarettenProTag(request.getZigarettenProTag())
+                .preisProPackung(request.getPreisProPackung())
+                .zigarettenProPackung(request.getZigarettenProPackung())
                 .build();
 
         user = userRepository.save(user);
@@ -34,9 +52,11 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
+                .profileImage(formatProfileImage(user.getProfileImage()))
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Ungültige Anmeldedaten"));
@@ -50,6 +70,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
+                .profileImage(formatProfileImage(user.getProfileImage()))
                 .build();
     }
 }

@@ -39,7 +39,8 @@ const Login = () => {
             navigate('/');
         } catch (error) {
             addToast(
-                'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
+                'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.' +
+                    error,
                 'error'
             );
         }
