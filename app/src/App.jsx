@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Statistics from './components/Statistics';
 import Achievements from './components/Achievements';
 import Login from './components/Login';
+import Register from './components/Register';
 
 function App() {
     return (
@@ -27,6 +28,7 @@ function App() {
                             element={<Achievements />}
                         />
                         <Route path='/login' element={<Login />} />
+                        <Route path='/register' element={<Register />} />
                     </Routes>
                 </div>
             </div>

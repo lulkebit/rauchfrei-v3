@@ -40,6 +40,8 @@ const Navbar = () => {
                         <NavLink href='/statistics' text='Statistiken' />
                         <NavLink href='/achievements' text='Erfolge' />
                         <NavLink href='/settings' text='Einstellungen' />
+                        <NavLink href='/login' text='Login' />
+                        <NavLink href='/register' text='Register' />
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -96,6 +98,8 @@ const Navbar = () => {
                                 href='/settings'
                                 text='Einstellungen'
                             />
+                            <MobileNavLink href='/login' text='Login' />
+                            <MobileNavLink href='/register' text='Register' />
                         </div>
                     </div>
                 )}
