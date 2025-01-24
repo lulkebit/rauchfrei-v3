@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ const Login = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const { login } = useAuth();
+    const { addToast } = useToast();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,15 +26,21 @@ const Login = () => {
             );
 
             if (!response.ok) {
-                throw new Error('Login fehlgeschlagen');
+                addToast(
+                    'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.',
+                    'error'
+                );
+                return;
             }
 
             const data = await response.json();
             login(data);
+            addToast('Erfolgreich eingeloggt!', 'success');
             navigate('/');
-        } catch {
-            setError(
-                'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.'
+        } catch (error) {
+            addToast(
+                'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
+                'error'
             );
         }
     };

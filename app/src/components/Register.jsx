@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ErrorDisplay from './ErrorDisplay';
+import { useToast } from '../context/ToastContext';
 
 const Register = () => {
     const [step, setStep] = useState(1);
@@ -23,6 +24,7 @@ const Register = () => {
         fields: {},
     });
     const navigate = useNavigate();
+    const { addToast } = useToast();
 
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
@@ -150,7 +152,6 @@ const Register = () => {
         if (!validateStep()) return;
 
         try {
-            // Konvertiere das Datum in das richtige Format (ISO String)
             const rauchfreiDate = new Date(formData.rauchfreiSeit);
 
             const response = await fetch(
@@ -165,7 +166,7 @@ const Register = () => {
                         username: formData.username,
                         password: formData.password,
                         profileImage: formData.profileImage,
-                        rauchfreiSeit: rauchfreiDate.toISOString(), // Konvertierung zum ISO String
+                        rauchfreiSeit: rauchfreiDate.toISOString(),
                         zigarettenProTag: parseInt(formData.zigarettenProTag),
                         preisProPackung: parseFloat(formData.preisProPackung),
                         zigarettenProPackung: parseInt(
@@ -184,6 +185,7 @@ const Register = () => {
                         details: '',
                         fields: data.fieldErrors,
                     });
+                    addToast('Bitte überprüfen Sie Ihre Eingaben', 'error');
                 } else {
                     throw new Error(
                         data.message || 'Registrierung fehlgeschlagen'
@@ -192,6 +194,10 @@ const Register = () => {
                 return;
             }
 
+            addToast(
+                'Registrierung erfolgreich! Willkommen bei Rauchfrei',
+                'success'
+            );
             localStorage.setItem('token', data.token);
             localStorage.setItem('username', data.username);
             navigate('/');
@@ -201,6 +207,7 @@ const Register = () => {
                 details: error.message,
                 fields: {},
             });
+            addToast('Ein unerwarteter Fehler ist aufgetreten', 'error');
         }
     };
 
