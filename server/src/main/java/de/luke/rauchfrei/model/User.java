@@ -33,6 +33,21 @@ public class User {
     @Column(nullable = false)
     private String username;
 
+    @Column(name = "profile_image")
+    private String profileImage;
+
+    @Column(name = "rauchfrei_seit")
+    private LocalDateTime rauchfreiSeit;
+
+    @Column(name = "zigaretten_pro_tag")
+    private Integer zigarettenProTag;
+
+    @Column(name = "preis_pro_packung")
+    private Double preisProPackung;
+
+    @Column(name = "zigaretten_pro_packung")
+    private Integer zigarettenProPackung;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
