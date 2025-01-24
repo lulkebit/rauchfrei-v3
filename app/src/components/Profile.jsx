@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { motion } from 'framer-motion';
 
 const Profile = () => {
     const { user, updateUser } = useAuth();
@@ -53,85 +53,31 @@ const Profile = () => {
         },
     ];
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
-    };
-
-    const validateForm = () => {
-        const errors = {};
-
-        if (!formData.username.trim()) {
-            errors.username = 'Benutzername ist erforderlich';
-        }
-
-        if (!formData.email.trim()) {
-            errors.email = 'E-Mail ist erforderlich';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            errors.email = 'Ungültiges E-Mail-Format';
-        }
-
-        return errors;
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            Object.values(errors).forEach((error) => {
-                addToast(error, 'error');
-            });
-            return;
-        }
-
         setIsLoading(true);
         try {
-            const response = await fetch(
-                'http://localhost:8080/api/user/profile',
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${localStorage.getItem(
-                            'token'
-                        )}`,
-                    },
-                    body: JSON.stringify(formData),
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error('Fehler beim Aktualisieren des Profils');
-            }
-
-            const updatedUser = await response.json();
-            updateUser(updatedUser);
+            await updateUser(formData);
             addToast('Profil erfolgreich aktualisiert', 'success');
             setIsEditing(false);
         } catch (error) {
             addToast('Fehler beim Aktualisieren des Profils', 'error');
-        } finally {
-            setIsLoading(false);
         }
+        setIsLoading(false);
     };
 
     return (
-        <div className='container mx-auto space-y-6 py-8'>
-            {/* Header Section */}
+        <div className='container mx-auto px-4 pt-24 pb-8 space-y-6'>
+            {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-8'
+                className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
             >
-                <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-                <div className='relative flex flex-col md:flex-row gap-8 items-center'>
-                    {/* Profilbild */}
+                <div className='flex flex-col md:flex-row gap-6 items-center'>
+                    {/* Avatar */}
                     <div className='relative'>
-                        <div className='w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-500/30'>
+                        <div className='w-32 h-32 rounded-full bg-emerald-500/10 border-4 border-emerald-500/20 flex items-center justify-center overflow-hidden'>
                             {user?.profileImage ? (
                                 <img
                                     src={user.profileImage}
@@ -139,13 +85,9 @@ const Profile = () => {
                                     className='w-full h-full object-cover'
                                 />
                             ) : (
-                                <div className='w-full h-full bg-emerald-500/20 flex items-center justify-center'>
-                                    <span className='text-4xl text-emerald-400'>
-                                        {user?.username
-                                            ?.charAt(0)
-                                            .toUpperCase()}
-                                    </span>
-                                </div>
+                                <span className='text-5xl text-emerald-400'>
+                                    {user?.username?.charAt(0).toUpperCase()}
+                                </span>
                             )}
                         </div>
                     </div>
@@ -158,116 +100,154 @@ const Profile = () => {
                         <p className='text-gray-400 mb-4'>{formData.bio}</p>
 
                         {/* Stats */}
-                        <div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-center'>
-                            <div className='bg-gray-700/30 rounded-lg p-3'>
-                                <div className='text-2xl font-bold text-emerald-400'>
-                                    {stats.rauchfreiTage}
-                                </div>
-                                <div className='text-sm text-gray-400'>
-                                    Tage rauchfrei
-                                </div>
-                            </div>
-                            <div className='bg-gray-700/30 rounded-lg p-3'>
-                                <div className='text-2xl font-bold text-emerald-400'>
-                                    {stats.gespartesGeld}€
-                                </div>
-                                <div className='text-sm text-gray-400'>
-                                    gespart
-                                </div>
-                            </div>
-                            <div className='bg-gray-700/30 rounded-lg p-3'>
-                                <div className='text-2xl font-bold text-emerald-400'>
-                                    {stats.follower}
-                                </div>
-                                <div className='text-sm text-gray-400'>
-                                    Follower
-                                </div>
-                            </div>
-                            <div className='bg-gray-700/30 rounded-lg p-3'>
-                                <div className='text-2xl font-bold text-emerald-400'>
-                                    {stats.following}
-                                </div>
-                                <div className='text-sm text-gray-400'>
-                                    Following
-                                </div>
-                            </div>
+                        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                            {Object.entries({
+                                'Tage rauchfrei': stats.rauchfreiTage,
+                                Gespart: `${stats.gespartesGeld}€`,
+                                Follower: stats.follower,
+                                Folgt: stats.following,
+                            }).map(([label, value], index) => (
+                                <motion.div
+                                    key={label}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className='relative overflow-hidden rounded-xl bg-gray-800/50 border border-gray-700/20 backdrop-blur-xl p-4'
+                                >
+                                    <div className='text-2xl font-bold text-emerald-400'>
+                                        {value}
+                                    </div>
+                                    <div className='text-sm text-gray-400'>
+                                        {label}
+                                    </div>
+                                </motion.div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </motion.div>
 
-            {/* Achievements Section */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'
-            >
-                <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-                <div className='relative'>
-                    <h2 className='text-xl font-bold text-gray-100 mb-4'>
-                        Errungenschaften
-                    </h2>
-                    <div className='flex flex-wrap gap-4'>
-                        {achievements.map((achievement) => (
-                            <div
-                                key={achievement.id}
-                                className='flex items-center gap-3 bg-gray-700/30 rounded-lg p-3'
-                            >
-                                <span className='text-2xl'>
-                                    {achievement.icon}
-                                </span>
-                                <span className='text-gray-300'>
-                                    {achievement.title}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </motion.div>
-
-            {/* Activity Feed */}
-            <motion.div
+            {/* Bearbeitungsformular */}
+            <motion.form
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'
+                onSubmit={handleSubmit}
+                className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6 space-y-6'
             >
-                <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-                <div className='relative'>
-                    <h2 className='text-xl font-bold text-gray-100 mb-4'>
-                        Aktivitäten
+                <div className='flex justify-between items-center mb-6'>
+                    <h2 className='text-xl font-semibold text-gray-100'>
+                        Profil Einstellungen
                     </h2>
-                    <div className='space-y-4'>
-                        {activities.map((activity) => (
-                            <div
-                                key={activity.id}
-                                className='flex items-start gap-4 bg-gray-700/30 rounded-lg p-4'
-                            >
-                                <div className='flex-1'>
-                                    <p className='text-gray-300'>
-                                        {activity.text}
-                                    </p>
-                                    <p className='text-sm text-gray-500'>
-                                        {activity.date}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                    <button
+                        type='button'
+                        onClick={() => setIsEditing(!isEditing)}
+                        className='px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors'
+                    >
+                        {isEditing ? 'Abbrechen' : 'Bearbeiten'}
+                    </button>
+                </div>
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                    {Object.entries({
+                        username: 'Benutzername',
+                        email: 'E-Mail',
+                        rauchfreiSeit: 'Rauchfrei seit',
+                        zigarettenProTag: 'Zigaretten pro Tag',
+                        preisProPackung: 'Preis pro Packung',
+                        zigarettenProPackung: 'Zigaretten pro Packung',
+                    }).map(([key, label]) => (
+                        <div key={key}>
+                            <label className='block text-gray-300 mb-2 font-medium'>
+                                {label}
+                            </label>
+                            <input
+                                type={key === 'rauchfreiSeit' ? 'date' : 'text'}
+                                name={key}
+                                value={formData[key]}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        [key]: e.target.value,
+                                    })
+                                }
+                                disabled={!isEditing}
+                                className='w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-4 py-3 text-gray-100 focus:ring-2 focus:ring-emerald-400/50 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+                            />
+                        </div>
+                    ))}
+                </div>
+
+                {isEditing && (
+                    <div className='flex justify-end'>
+                        <button
+                            type='submit'
+                            disabled={isLoading}
+                            className='px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                        >
+                            {isLoading ? 'Speichern...' : 'Speichern'}
+                        </button>
                     </div>
+                )}
+            </motion.form>
+
+            {/* Achievements */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
+            >
+                <h2 className='text-xl font-semibold text-gray-100 mb-6'>
+                    Letzte Erfolge
+                </h2>
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                    {achievements.map((achievement, index) => (
+                        <motion.div
+                            key={achievement.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 + index * 0.1 }}
+                            className='flex items-center space-x-4 p-4 bg-gray-800/50 rounded-xl border border-gray-700/20'
+                        >
+                            <span className='text-2xl'>{achievement.icon}</span>
+                            <span className='text-gray-300'>
+                                {achievement.title}
+                            </span>
+                        </motion.div>
+                    ))}
                 </div>
             </motion.div>
 
-            {/* Edit Profile Button */}
-            <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                onClick={() => setIsEditing(true)}
-                className='fixed bottom-8 right-8 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-6 rounded-full shadow-lg transition-colors'
+            {/* Aktivitäten */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
             >
-                Profil bearbeiten
-            </motion.button>
+                <h2 className='text-xl font-semibold text-gray-100 mb-6'>
+                    Aktivitäten
+                </h2>
+                <div className='space-y-4'>
+                    {activities.map((activity, index) => (
+                        <motion.div
+                            key={activity.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.5 + index * 0.1 }}
+                            className='flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700/20'
+                        >
+                            <span className='text-gray-300'>
+                                {activity.text}
+                            </span>
+                            <span className='text-gray-500 text-sm'>
+                                {activity.date}
+                            </span>
+                        </motion.div>
+                    ))}
+                </div>
+            </motion.div>
         </div>
     );
 };
