@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import PropTypes from 'prop-types';
 
 const Dashboard = () => {
     const mockData = {
@@ -167,6 +167,13 @@ const StatCard = ({ title, value, color, icon }) => (
     </div>
 );
 
+StatCard.propTypes = {
+    title: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    color: PropTypes.string.isRequired,
+    icon: PropTypes.node.isRequired,
+};
+
 const CravingChart = ({ data }) => (
     <div className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'>
         <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
@@ -200,6 +207,15 @@ const CravingChart = ({ data }) => (
         </div>
     </div>
 );
+
+CravingChart.propTypes = {
+    data: PropTypes.arrayOf(
+        PropTypes.shape({
+            tag: PropTypes.string.isRequired,
+            stärke: PropTypes.number.isRequired,
+        })
+    ).isRequired,
+};
 
 const MilestoneTracker = ({ current, milestones }) => (
     <div className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'>
@@ -236,6 +252,16 @@ const MilestoneTracker = ({ current, milestones }) => (
         </div>
     </div>
 );
+
+MilestoneTracker.propTypes = {
+    current: PropTypes.number.isRequired,
+    milestones: PropTypes.arrayOf(
+        PropTypes.shape({
+            tage: PropTypes.number.isRequired,
+            belohnung: PropTypes.string.isRequired,
+        })
+    ).isRequired,
+};
 
 const MotivationCard = () => (
     <div className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'>
