@@ -39,86 +39,6 @@ const Navbar = () => {
         </div>
     );
 
-    // Profile Card Component
-    const ProfileCard = () => (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className='absolute right-0 top-12 mt-2 w-80 rounded-xl overflow-hidden z-50'
-            style={{ filter: 'drop-shadow(0 25px 25px rgb(0 0 0 / 0.15))' }}
-        >
-            <div className='relative overflow-hidden bg-gray-800/95 backdrop-blur-xl shadow-xl border border-gray-700/50'>
-                {/* Header mit Hintergrundbild */}
-                <div className='h-24 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 relative'>
-                    <div className='absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2'>
-                        <div className='w-20 h-20 rounded-full border-4 border-gray-800/95 overflow-hidden'>
-                            {user?.profileImage ? (
-                                <img
-                                    src={user.profileImage}
-                                    alt={user.username}
-                                    className='w-full h-full object-cover'
-                                />
-                            ) : (
-                                <div className='w-full h-full bg-emerald-500/20 flex items-center justify-center'>
-                                    <span className='text-3xl text-emerald-400'>
-                                        {user?.username
-                                            ?.charAt(0)
-                                            .toUpperCase()}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Profil Info */}
-                <div className='pt-12 p-6 space-y-4'>
-                    <div className='text-center'>
-                        <h3 className='text-lg font-semibold text-gray-100'>
-                            {user?.username}
-                        </h3>
-                        <p className='text-sm text-gray-400'>{user?.email}</p>
-                    </div>
-
-                    {/* Stats */}
-                    <div className='grid grid-cols-2 gap-4 py-2'>
-                        <div className='text-center p-2 rounded-lg bg-gray-700/30'>
-                            <div className='text-emerald-400 font-bold'>
-                                {rauchfreiTage}
-                            </div>
-                            <div className='text-xs text-gray-400'>
-                                Tage rauchfrei
-                            </div>
-                        </div>
-                        <div className='text-center p-2 rounded-lg bg-gray-700/30'>
-                            <div className='text-emerald-400 font-bold'>
-                                {gespartesGeld.toFixed(2)}€
-                            </div>
-                            <div className='text-xs text-gray-400'>gespart</div>
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className='space-y-2'>
-                        <button
-                            onClick={handleProfileClick}
-                            className='w-full py-2 px-4 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors text-sm'
-                        >
-                            Profil anzeigen
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            className='w-full py-2 px-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors text-sm'
-                        >
-                            Ausloggen
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
-    );
-
     const NavLink = ({ href, text, icon }) => {
         const location = useLocation();
         const isActive = location.pathname === href;
@@ -231,16 +151,14 @@ const Navbar = () => {
                                     <div
                                         className='relative pl-2'
                                         ref={profileRef}
+                                        onMouseEnter={() =>
+                                            setShowProfileCard(true)
+                                        }
+                                        onMouseLeave={() =>
+                                            setShowProfileCard(false)
+                                        }
                                     >
-                                        <button
-                                            onMouseEnter={() =>
-                                                setShowProfileCard(true)
-                                            }
-                                            onMouseLeave={() =>
-                                                setShowProfileCard(false)
-                                            }
-                                            className='flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-emerald-500/5 transition-colors'
-                                        >
+                                        <button className='flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-emerald-500/5 transition-colors'>
                                             {user.profileImage ? (
                                                 <img
                                                     src={user.profileImage}
@@ -256,18 +174,35 @@ const Navbar = () => {
                                         </button>
                                         <AnimatePresence>
                                             {showProfileCard && (
-                                                <div
-                                                    onMouseEnter={() =>
-                                                        setShowProfileCard(true)
-                                                    }
-                                                    onMouseLeave={() =>
-                                                        setShowProfileCard(
-                                                            false
-                                                        )
-                                                    }
+                                                <motion.div
+                                                    initial={{
+                                                        opacity: 0,
+                                                        y: 10,
+                                                    }}
+                                                    animate={{
+                                                        opacity: 1,
+                                                        y: 0,
+                                                    }}
+                                                    exit={{ opacity: 0, y: 10 }}
+                                                    className='absolute right-0 top-12 mt-2 w-80 rounded-xl overflow-hidden z-50'
+                                                    style={{
+                                                        filter: 'drop-shadow(0 25px 25px rgb(0 0 0 / 0.15))',
+                                                    }}
                                                 >
-                                                    <ProfileCard />
-                                                </div>
+                                                    <ProfileCard
+                                                        user={user}
+                                                        rauchfreiTage={
+                                                            rauchfreiTage
+                                                        }
+                                                        gespartesGeld={
+                                                            gespartesGeld
+                                                        }
+                                                        onProfileClick={
+                                                            handleProfileClick
+                                                        }
+                                                        onLogout={handleLogout}
+                                                    />
+                                                </motion.div>
                                             )}
                                         </AnimatePresence>
                                     </div>
@@ -373,5 +308,79 @@ const Navbar = () => {
         </div>
     );
 };
+
+// Die ProfileCard Komponente mit Props
+const ProfileCard = ({
+    user,
+    rauchfreiTage,
+    gespartesGeld,
+    onProfileClick,
+    onLogout,
+}) => (
+    <div className='relative overflow-hidden bg-gray-800/95 backdrop-blur-xl shadow-xl border border-gray-700/50'>
+        {/* Header mit Hintergrundbild */}
+        <div className='h-24 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 relative'>
+            <div className='absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2'>
+                <div className='w-20 h-20 rounded-full border-4 border-gray-800/95 overflow-hidden'>
+                    {user?.profileImage ? (
+                        <img
+                            src={user.profileImage}
+                            alt={user.username}
+                            className='w-full h-full object-cover'
+                        />
+                    ) : (
+                        <div className='w-full h-full bg-emerald-500/20 flex items-center justify-center'>
+                            <span className='text-3xl text-emerald-400'>
+                                {user?.username?.charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {/* Profil Info */}
+        <div className='pt-12 p-6 space-y-4'>
+            <div className='text-center'>
+                <h3 className='text-lg font-semibold text-gray-100'>
+                    {user?.username}
+                </h3>
+                <p className='text-sm text-gray-400'>{user?.email}</p>
+            </div>
+
+            {/* Stats */}
+            <div className='grid grid-cols-2 gap-4 py-2'>
+                <div className='text-center p-2 rounded-lg bg-gray-700/30'>
+                    <div className='text-emerald-400 font-bold'>
+                        {rauchfreiTage}
+                    </div>
+                    <div className='text-xs text-gray-400'>Tage rauchfrei</div>
+                </div>
+                <div className='text-center p-2 rounded-lg bg-gray-700/30'>
+                    <div className='text-emerald-400 font-bold'>
+                        {gespartesGeld.toFixed(2)}€
+                    </div>
+                    <div className='text-xs text-gray-400'>gespart</div>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className='space-y-2'>
+                <button
+                    onClick={onProfileClick}
+                    className='w-full py-2 px-4 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors text-sm'
+                >
+                    Profil anzeigen
+                </button>
+                <button
+                    onClick={onLogout}
+                    className='w-full py-2 px-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors text-sm'
+                >
+                    Ausloggen
+                </button>
+            </div>
+        </div>
+    </div>
+);
 
 export default Navbar;
