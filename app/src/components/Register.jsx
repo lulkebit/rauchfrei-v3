@@ -150,6 +150,9 @@ const Register = () => {
         if (!validateStep()) return;
 
         try {
+            // Konvertiere das Datum in das richtige Format (ISO String)
+            const rauchfreiDate = new Date(formData.rauchfreiSeit);
+            
             const response = await fetch(
                 'http://localhost:8080/api/auth/register',
                 {
@@ -162,7 +165,7 @@ const Register = () => {
                         username: formData.username,
                         password: formData.password,
                         profileImage: formData.profileImage,
-                        rauchfreiSeit: formData.rauchfreiSeit,
+                        rauchfreiSeit: rauchfreiDate.toISOString(), // Konvertierung zum ISO String
                         zigarettenProTag: parseInt(formData.zigarettenProTag),
                         preisProPackung: parseFloat(formData.preisProPackung),
                         zigarettenProPackung: parseInt(
@@ -176,14 +179,12 @@ const Register = () => {
 
             if (!response.ok) {
                 if (data.fieldErrors) {
-                    // Backend-spezifische Feldvalidierungsfehler
                     setErrors({
                         message: data.message || 'Registrierung fehlgeschlagen',
                         details: '',
                         fields: data.fieldErrors,
                     });
                 } else {
-                    // Allgemeiner Backend-Fehler
                     throw new Error(
                         data.message || 'Registrierung fehlgeschlagen'
                     );
