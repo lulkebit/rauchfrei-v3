@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { motion } from 'framer-motion';
 
 const Dashboard = () => {
     const mockData = {
@@ -28,19 +29,28 @@ const Dashboard = () => {
     };
 
     return (
-        <div className='container mx-auto space-y-6'>
-            <h1 className='text-3xl font-bold mb-8 text-gray-100'>
-                Mein Fortschritt
-            </h1>
+        <div className='container mx-auto px-4 pt-24 pb-8 space-y-6'>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className='flex items-center justify-between mb-8'
+            >
+                <h1 className='text-3xl font-bold text-gray-100'>
+                    Mein Fortschritt
+                </h1>
+                <span className='text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20'>
+                    {mockData.naechsterMeilenstein}
+                </span>
+            </motion.div>
 
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 <StatCard
                     title='Rauchfreie Tage'
                     value={mockData.rauchfreeTage}
-                    color='emerald'
+                    subtitle='Tage'
                     icon={
                         <svg
-                            className='w-6 h-6'
+                            className='w-5 h-5'
                             fill='none'
                             stroke='currentColor'
                             viewBox='0 0 24 24'
@@ -57,11 +67,11 @@ const Dashboard = () => {
 
                 <StatCard
                     title='Gespartes Geld'
-                    value={`${mockData.gespartesGeld}€`}
-                    color='green'
+                    value={mockData.gespartesGeld}
+                    subtitle='Euro'
                     icon={
                         <svg
-                            className='w-6 h-6'
+                            className='w-5 h-5'
                             fill='none'
                             stroke='currentColor'
                             viewBox='0 0 24 24'
@@ -79,10 +89,10 @@ const Dashboard = () => {
                 <StatCard
                     title='Vermiedene Zigaretten'
                     value={mockData.vermiedeneZigaretten}
-                    color='teal'
+                    subtitle='Stück'
                     icon={
                         <svg
-                            className='w-6 h-6'
+                            className='w-5 h-5'
                             fill='none'
                             stroke='currentColor'
                             viewBox='0 0 24 24'
@@ -100,113 +110,199 @@ const Dashboard = () => {
 
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 <CravingChart data={mockData.tagesVerlauf} />
-
                 <MilestoneTracker
                     current={mockData.rauchfreeTage}
                     milestones={mockData.naechsteMeilensteine}
                 />
             </div>
 
-            <MotivationCard />
-
-            <div className='mt-8 relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 bg-gray-800/50'>
-                <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-
-                <div className='relative p-6'>
-                    <h2 className='text-xl font-semibold mb-4 text-gray-100'>
-                        Gesundheitsverbesserungen
-                    </h2>
-                    <ul className='space-y-3'>
-                        {mockData.gesundheitsVerbesserungen.map(
-                            (verbesserung, index) => (
-                                <li
-                                    key={index}
-                                    className='flex items-center space-x-3 text-gray-300'
-                                >
-                                    <svg
-                                        className='w-5 h-5 text-emerald-400'
-                                        fill='none'
-                                        stroke='currentColor'
-                                        viewBox='0 0 24 24'
-                                    >
-                                        <path
-                                            strokeLinecap='round'
-                                            strokeLinejoin='round'
-                                            strokeWidth='2'
-                                            d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                                        />
-                                    </svg>
-                                    <span>{verbesserung}</span>
-                                </li>
-                            )
-                        )}
-                    </ul>
-                </div>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                <MotivationCard />
+                <HealthImprovements
+                    improvements={mockData.gesundheitsVerbesserungen}
+                />
             </div>
         </div>
     );
 };
 
-const StatCard = ({ title, value, color, icon }) => (
-    <div className='relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-0.5 bg-gray-800/50'>
-        <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-
-        <div className='relative p-6'>
+const StatCard = ({ title, value, subtitle, icon }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl'
+    >
+        <div className='p-6'>
             <div className='flex items-center justify-between mb-4'>
-                <div
-                    className={`p-2 bg-gray-800/50 rounded-lg border border-gray-700/50`}
-                >
-                    <div className={`text-${color}-400`}>{icon}</div>
+                <div className='p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20'>
+                    <div className='text-emerald-400'>{icon}</div>
                 </div>
             </div>
-            <h2 className={`text-lg font-semibold text-gray-300 mb-2`}>
-                {title}
-            </h2>
-            <p className={`text-4xl font-bold text-${color}-400`}>{value}</p>
+            <h2 className='text-sm font-medium text-gray-400 mb-1'>{title}</h2>
+            <div className='flex items-baseline space-x-2'>
+                <p className='text-3xl font-bold text-gray-100'>{value}</p>
+                <span className='text-sm text-gray-400'>{subtitle}</span>
+            </div>
         </div>
-    </div>
+    </motion.div>
+);
+
+const CravingChart = ({ data }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
+    >
+        <h2 className='text-xl font-semibold mb-6 text-gray-100'>
+            Verlauf des Verlangens
+        </h2>
+        <div className='h-48 flex items-end justify-between gap-2'>
+            {data.map((item, index) => (
+                <div key={index} className='flex flex-col items-center flex-1'>
+                    <div className='w-full relative rounded-t-lg overflow-hidden'>
+                        <div
+                            className='w-full bg-emerald-500/10 absolute bottom-0 transition-all duration-500'
+                            style={{ height: `${(item.stärke / 10) * 100}%` }}
+                        >
+                            <div
+                                className='w-full bg-emerald-400/20 absolute bottom-0 transition-all duration-500'
+                                style={{ height: '100%' }}
+                            />
+                        </div>
+                    </div>
+                    <span className='text-sm text-gray-400 mt-2'>
+                        {item.tag}
+                    </span>
+                </div>
+            ))}
+        </div>
+    </motion.div>
+);
+
+const MilestoneTracker = ({ current, milestones }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
+    >
+        <h2 className='text-xl font-semibold mb-6 text-gray-100'>
+            Nächste Meilensteine
+        </h2>
+        <div className='space-y-6'>
+            {milestones.map((milestone, index) => (
+                <div key={index}>
+                    <div className='flex justify-between items-center mb-2'>
+                        <span className='text-gray-300 font-medium'>
+                            {milestone.belohnung}
+                        </span>
+                        <span className='text-sm text-emerald-400'>
+                            {Math.round((current / milestone.tage) * 100)}%
+                        </span>
+                    </div>
+                    <div className='h-2 bg-gray-700/50 rounded-full overflow-hidden'>
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{
+                                width: `${Math.min(
+                                    (current / milestone.tage) * 100,
+                                    100
+                                )}%`,
+                            }}
+                            transition={{ duration: 1, ease: 'easeOut' }}
+                            className='h-full bg-emerald-400/50 rounded-full'
+                        />
+                    </div>
+                    <div className='mt-1 text-xs text-gray-500'>
+                        {milestone.tage} Tage Ziel
+                    </div>
+                </div>
+            ))}
+        </div>
+    </motion.div>
+);
+
+const MotivationCard = () => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
+    >
+        <div className='flex items-start space-x-4'>
+            <div className='p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20'>
+                <svg
+                    className='w-5 h-5 text-emerald-400'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                >
+                    <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M13 10V3L4 14h7v7l9-11h-7z'
+                    />
+                </svg>
+            </div>
+            <div>
+                <h2 className='text-xl font-semibold text-gray-100 mb-3'>
+                    Tägliche Motivation
+                </h2>
+                <p className='text-gray-400 leading-relaxed'>
+                    "Jeder Tag ohne Zigarette ist ein Gewinn für deine
+                    Gesundheit. Du hast bereits bewiesen, dass du stärker bist
+                    als die Sucht. Bleib auf diesem Weg!"
+                </p>
+            </div>
+        </div>
+    </motion.div>
+);
+
+const HealthImprovements = ({ improvements }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
+    >
+        <h2 className='text-xl font-semibold mb-4 text-gray-100'>
+            Gesundheitsverbesserungen
+        </h2>
+        <div className='space-y-4'>
+            {improvements.map((improvement, index) => (
+                <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className='flex items-center space-x-3'
+                >
+                    <div className='p-1.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20'>
+                        <svg
+                            className='w-4 h-4 text-emerald-400'
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                        >
+                            <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth='2'
+                                d='M5 13l4 4L19 7'
+                            />
+                        </svg>
+                    </div>
+                    <span className='text-gray-300'>{improvement}</span>
+                </motion.div>
+            ))}
+        </div>
+    </motion.div>
 );
 
 StatCard.propTypes = {
     title: PropTypes.string.isRequired,
     value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    color: PropTypes.string.isRequired,
+    subtitle: PropTypes.string.isRequired,
     icon: PropTypes.node.isRequired,
 };
-
-const CravingChart = ({ data }) => (
-    <div className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'>
-        <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-        <div className='relative'>
-            <h2 className='text-xl font-semibold mb-4 text-gray-100'>
-                Verlauf des Verlangens
-            </h2>
-            <div className='h-48 flex items-end justify-between gap-2'>
-                {data.map((item, index) => (
-                    <div
-                        key={index}
-                        className='flex flex-col items-center flex-1'
-                    >
-                        <div
-                            className='w-full bg-emerald-400/20 rounded-t'
-                            style={{ height: `${(item.stärke / 10) * 100}%` }}
-                        >
-                            <div
-                                className='w-full bg-emerald-400/40 rounded-t transition-all duration-500'
-                                style={{
-                                    height: `${
-                                        100 - (item.stärke / 10) * 100
-                                    }%`,
-                                }}
-                            />
-                        </div>
-                        <span className='text-gray-400 mt-2'>{item.tag}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    </div>
-);
 
 CravingChart.propTypes = {
     data: PropTypes.arrayOf(
@@ -216,42 +312,6 @@ CravingChart.propTypes = {
         })
     ).isRequired,
 };
-
-const MilestoneTracker = ({ current, milestones }) => (
-    <div className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'>
-        <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-        <div className='relative'>
-            <h2 className='text-xl font-semibold mb-4 text-gray-100'>
-                Nächste Meilensteine
-            </h2>
-            <div className='space-y-4'>
-                {milestones.map((milestone, index) => (
-                    <div key={index} className='relative'>
-                        <div className='flex justify-between items-center mb-2'>
-                            <span className='text-gray-300'>
-                                {milestone.tage} Tage - {milestone.belohnung}
-                            </span>
-                            <span className='text-emerald-400'>
-                                {Math.round((current / milestone.tage) * 100)}%
-                            </span>
-                        </div>
-                        <div className='h-2 bg-gray-700 rounded-full overflow-hidden'>
-                            <div
-                                className='h-full bg-emerald-400 rounded-full transition-all duration-500'
-                                style={{
-                                    width: `${Math.min(
-                                        (current / milestone.tage) * 100,
-                                        100
-                                    )}%`,
-                                }}
-                            />
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    </div>
-);
 
 MilestoneTracker.propTypes = {
     current: PropTypes.number.isRequired,
@@ -263,39 +323,12 @@ MilestoneTracker.propTypes = {
     ).isRequired,
 };
 
-const MotivationCard = () => (
-    <div className='relative overflow-hidden rounded-2xl shadow-lg bg-gray-800/50 p-6'>
-        <div className='absolute inset-0 backdrop-blur-md bg-gray-900/40' />
-        <div className='relative'>
-            <div className='flex items-start space-x-4'>
-                <div className='p-3 bg-emerald-400/10 rounded-lg'>
-                    <svg
-                        className='w-6 h-6 text-emerald-400'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                    >
-                        <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth='2'
-                            d='M13 10V3L4 14h7v7l9-11h-7z'
-                        />
-                    </svg>
-                </div>
-                <div>
-                    <h2 className='text-xl font-semibold text-gray-100 mb-2'>
-                        Tägliche Motivation
-                    </h2>
-                    <p className='text-gray-300'>
-                        "Jeder Tag ohne Zigarette ist ein Gewinn für deine
-                        Gesundheit. Du hast bereits bewiesen, dass du stärker
-                        bist als die Sucht. Bleib auf diesem Weg!"
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-);
+MotivationCard.propTypes = {
+    // No specific prop types for this component
+};
+
+HealthImprovements.propTypes = {
+    improvements: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
+};
 
 export default Dashboard;
