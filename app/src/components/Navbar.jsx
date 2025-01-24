@@ -52,6 +52,7 @@ const Navbar = () => {
                                     text='Statistiken'
                                 />
                                 <NavLink href='/achievements' text='Erfolge' />
+                                <NavLink href='/profile' text='Profil' />
                                 <div className='flex items-center space-x-4'>
                                     <span className='text-emerald-400'>
                                         {user.username}
@@ -123,6 +124,10 @@ const Navbar = () => {
                                     <MobileNavLink
                                         href='/achievements'
                                         text='Erfolge'
+                                    />
+                                    <MobileNavLink
+                                        href='/profile'
+                                        text='Profil'
                                     />
                                     <div className='px-4 py-2 text-emerald-400'>
                                         {user.username}

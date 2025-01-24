@@ -8,6 +8,7 @@ import Statistics from './components/Statistics';
 import Achievements from './components/Achievements';
 import Login from './components/Login';
 import Register from './components/Register';
+import Profile from './components/Profile';
 
 function App() {
     return (
@@ -63,6 +64,14 @@ function App() {
                                     <RedirectIfAuthenticated>
                                         <Register />
                                     </RedirectIfAuthenticated>
+                                }
+                            />
+                            <Route
+                                path='/profile'
+                                element={
+                                    <ProtectedRoute>
+                                        <Profile />
+                                    </ProtectedRoute>
                                 }
                             />
                         </Routes>
