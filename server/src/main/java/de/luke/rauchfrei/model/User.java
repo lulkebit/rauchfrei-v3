@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import jakarta.persistence.PrePersist;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -106,5 +107,13 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public LocalDate getQuitDate() {
+        return rauchfreiSeit != null ? rauchfreiSeit.toLocalDate() : LocalDate.now();
+    }
+
+    public int getDailyCigarettes() {
+        return zigarettenProTag != null ? zigarettenProTag : 0;
     }
 }
