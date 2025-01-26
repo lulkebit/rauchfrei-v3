@@ -44,7 +44,7 @@ public class AuthService {
                 .build();
 
         user = userRepository.save(user);
-        String token = jwtTokenProvider.generateToken(user);
+        String token = jwtTokenProvider.generateToken(user.getUsername());
 
         return AuthResponse.builder()
                 .token(token)
@@ -62,7 +62,7 @@ public class AuthService {
             throw new RuntimeException("Ungültige Anmeldedaten");
         }
 
-        String token = jwtTokenProvider.generateToken(user);
+        String token = jwtTokenProvider.generateToken(user.getUsername());
 
         return AuthResponse.builder()
                 .token(token)

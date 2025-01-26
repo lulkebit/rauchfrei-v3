@@ -6,6 +6,11 @@ import de.luke.rauchfrei.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -22,5 +27,47 @@ public class UserService {
         user.setZigarettenProPackung(request.getZigarettenProPackung());
         
         return userRepository.save(user);
+    }
+
+    public Map<String, Object> calculateDashboardStats(String email) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
+
+        LocalDateTime rauchfreiSeit = user.getRauchfreiSeit();
+        LocalDateTime jetzt = LocalDateTime.now();
+        
+        long rauchfreiTage = ChronoUnit.DAYS.between(rauchfreiSeit, jetzt);
+        int zigarettenProTag = user.getZigarettenProTag();
+        double preisProPackung = user.getPreisProPackung();
+        int zigarettenProPackung = user.getZigarettenProPackung();
+
+        // Berechne vermiedene Zigaretten
+        long vermiedeneZigaretten = rauchfreiTage * zigarettenProTag;
+
+        // Berechne gespartes Geld
+        double gespartesGeld = (vermiedeneZigaretten / (double) zigarettenProPackung) * preisProPackung;
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("rauchfreiTage", rauchfreiTage);
+        stats.put("vermiedeneZigaretten", vermiedeneZigaretten);
+        stats.put("gespartesGeld", Math.round(gespartesGeld * 100.0) / 100.0);
+        
+        return stats;
+    }
+
+    public Map<String, Object> getUserProfile(String email) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
+
+        Map<String, Object> profile = new HashMap<>();
+        profile.put("username", user.getUsername());
+        profile.put("email", user.getEmail());
+        profile.put("profileImage", user.getProfileImage());
+        profile.put("rauchfreiSeit", user.getRauchfreiSeit());
+        profile.put("zigarettenProTag", user.getZigarettenProTag());
+        profile.put("preisProPackung", user.getPreisProPackung());
+        profile.put("zigarettenProPackung", user.getZigarettenProPackung());
+        
+        return profile;
     }
 }

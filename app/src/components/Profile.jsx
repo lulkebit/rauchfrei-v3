@@ -57,7 +57,14 @@ const Profile = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await updateUser(formData);
+            // Konvertiere die Werte in die richtigen Typen
+            const updatedData = {
+                ...formData,
+                zigarettenProTag: Number(formData.zigarettenProTag),
+                preisProPackung: Number(formData.preisProPackung),
+                zigarettenProPackung: Number(formData.zigarettenProPackung),
+            };
+            await updateUser(updatedData);
             addToast('Profil erfolgreich aktualisiert', 'success');
             setIsEditing(false);
         } catch (error) {

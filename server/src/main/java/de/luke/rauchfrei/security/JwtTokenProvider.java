@@ -1,16 +1,14 @@
 package de.luke.rauchfrei.security;
 
-import org.springframework.beans.factory.annotation.Value;
-import de.luke.rauchfrei.model.User;
-import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import java.security.Key;
 import java.util.Date;
 
-@Service
-@RequiredArgsConstructor
+@Component
 public class JwtTokenProvider {
     
     @Value("${jwt.secret}")
@@ -18,37 +16,41 @@ public class JwtTokenProvider {
     
     @Value("${jwt.expiration}")
     private long jwtExpiration;
-
-    public String generateToken(User user) {
+    
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
+    
+    public String generateToken(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
-
+        
         return Jwts.builder()
-                .subject(user.getEmail())
+                .subject(username)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                .signWith(getSigningKey())
                 .compact();
     }
-
-    public String getEmailFromToken(String token) {
+    
+    public String getUsernameFromToken(String token) {
         Claims claims = Jwts.parser()
-                .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                .setSigningKey(getSigningKey())
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
+                .parseClaimsJws(token)
+                .getBody();
+        
         return claims.getSubject();
     }
-
+    
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
-                    .build()
-                    .parseSignedClaims(token);
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token);
             return true;
-        } catch (Exception ex) {
+        } catch (Exception e) {
             return false;
         }
     }

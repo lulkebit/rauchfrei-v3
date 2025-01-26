@@ -1,32 +1,113 @@
 import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import ErrorDisplay from './ErrorDisplay';
+
+const calculateNextMilestone = (days) => {
+    const milestones = [1, 3, 7, 14, 30, 60, 90, 180, 365];
+    return `${milestones.find((m) => m > days) || 'Über 365'} Tage`;
+};
+
+const calculateHealthImprovements = (days) => {
+    return [
+        'Puls und Blutdruck normalisieren sich',
+        'Verbesserte Durchblutung',
+        'Regeneration der Lungenfunktion',
+        'Mehr Energie im Alltag',
+    ];
+};
+
+const calculateDailyProgress = (days) => {
+    return Array.from({ length: 7 }, (_, i) => ({
+        tag: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'][i],
+        stärke: Math.max(0, 10 - days / 3),
+    }));
+};
 
 const Dashboard = () => {
-    const mockData = {
-        rauchfreeTage: 15,
-        gespartesGeld: 75.5,
-        vermiedeneZigaretten: 300,
-        naechsterMeilenstein: '20 Tage rauchfrei',
-        gesundheitsVerbesserungen: [
-            'Verbesserte Durchblutung',
-            'Normalisierter Blutdruck',
-            'Besserer Geschmackssinn',
-        ],
-        tagesVerlauf: [
-            { tag: 'Mo', stärke: 8 },
-            { tag: 'Di', stärke: 6 },
-            { tag: 'Mi', stärke: 7 },
-            { tag: 'Do', stärke: 4 },
-            { tag: 'Fr', stärke: 3 },
-            { tag: 'Sa', stärke: 2 },
-            { tag: 'So', stärke: 1 },
-        ],
-        naechsteMeilensteine: [
-            { tage: 20, belohnung: 'Kinobesuch' },
-            { tage: 30, belohnung: 'Neues Buch' },
-            { tage: 50, belohnung: 'Restaurant' },
-        ],
-    };
+    const { user } = useAuth();
+    const { addToast } = useToast();
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [dashboardData, setDashboardData] = useState(null);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                setIsLoading(true);
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Kein Authentifizierungs-Token gefunden');
+                }
+
+                const response = await fetch(
+                    'http://localhost:8080/api/dashboard/stats',
+                    {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || 'Fehler beim Laden der Dashboard-Daten'
+                    );
+                }
+
+                setDashboardData({
+                    rauchfreeTage: data.rauchfreiTage,
+                    vermiedeneZigaretten: data.vermiedeneZigaretten,
+                    gespartesGeld: data.gespartesGeld,
+                    naechsterMeilenstein: calculateNextMilestone(
+                        data.rauchfreiTage
+                    ),
+                    gesundheitsVerbesserungen: calculateHealthImprovements(
+                        data.rauchfreiTage
+                    ),
+                    tagesVerlauf: calculateDailyProgress(data.rauchfreiTage),
+                    naechsteMeilensteine: [
+                        1, 3, 7, 14, 30, 60, 90, 180, 365,
+                    ].filter((m) => m > data.rauchfreiTage),
+                });
+            } catch (err) {
+                setError({
+                    message: err.message,
+                    type: 'error',
+                });
+                addToast(err.message, 'error');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (user) {
+            fetchDashboardData();
+        }
+    }, [user, addToast]);
+
+    if (isLoading) {
+        return (
+            <div className='flex justify-center items-center h-screen'>
+                <div className='animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-emerald-500'></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return <ErrorDisplay errors={error} />;
+    }
+
+    if (!dashboardData) {
+        return null;
+    }
 
     return (
         <div className='container mx-auto px-4 pt-24 pb-8 space-y-6'>
@@ -39,14 +120,14 @@ const Dashboard = () => {
                     Mein Fortschritt
                 </h1>
                 <span className='text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20'>
-                    {mockData.naechsterMeilenstein}
+                    {dashboardData.naechsterMeilenstein}
                 </span>
             </motion.div>
 
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 <StatCard
                     title='Rauchfreie Tage'
-                    value={mockData.rauchfreeTage}
+                    value={dashboardData.rauchfreeTage}
                     subtitle='Tage'
                     icon={
                         <svg
@@ -67,7 +148,7 @@ const Dashboard = () => {
 
                 <StatCard
                     title='Gespartes Geld'
-                    value={mockData.gespartesGeld}
+                    value={dashboardData.gespartesGeld}
                     subtitle='Euro'
                     icon={
                         <svg
@@ -88,7 +169,7 @@ const Dashboard = () => {
 
                 <StatCard
                     title='Vermiedene Zigaretten'
-                    value={mockData.vermiedeneZigaretten}
+                    value={dashboardData.vermiedeneZigaretten}
                     subtitle='Stück'
                     icon={
                         <svg
@@ -109,17 +190,27 @@ const Dashboard = () => {
             </div>
 
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-                <CravingChart data={mockData.tagesVerlauf} />
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
+                >
+                    <h2 className='text-xl font-semibold mb-4'>
+                        Verlauf des Verlangens
+                    </h2>
+                    <CravingChart data={dashboardData.tagesVerlauf} />
+                </motion.div>
                 <MilestoneTracker
-                    current={mockData.rauchfreeTage}
-                    milestones={mockData.naechsteMeilensteine}
+                    current={dashboardData.rauchfreeTage}
+                    milestones={dashboardData.naechsteMeilensteine}
                 />
             </div>
 
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 <MotivationCard />
                 <HealthImprovements
-                    improvements={mockData.gesundheitsVerbesserungen}
+                    improvements={dashboardData.gesundheitsVerbesserungen}
                 />
             </div>
         </div>
