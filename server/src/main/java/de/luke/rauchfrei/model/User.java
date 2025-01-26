@@ -68,8 +68,26 @@ public class User implements UserDetails {
     @Column(name = "following_count")
     private Integer followingCount;
 
+    @Column(name = "alter")
+    private Integer alter;
+
+    @Column(name = "rauchdauer_jahre")
+    private Integer rauchdauerJahre;
+
+    @Column(name = "vorerkrankungen", columnDefinition = "TEXT")
+    private String vorerkrankungen;
+
+    @Column(name = "koerpergewicht")
+    private Double koerpergewicht;
+
+    @Column(name = "sport_aktivitaet")
+    private String sportAktivitaet;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Achievement> achievements;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<HealthProgress> healthProgress;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Activity> activities;

@@ -5,245 +5,207 @@ import { useAuth } from '../context/AuthContext';
 import ErrorDisplay from './ErrorDisplay';
 
 const Statistics = () => {
-    const [stats, setStats] = useState(null);
+    const [healthData, setHealthData] = useState(null);
     const [error, setError] = useState(null);
-    const { user } = useAuth();
+    const { user, token } = useAuth();
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchHealthData = async () => {
             try {
-                const token = localStorage.getItem('token');
+                if (!token) {
+                    setError(
+                        'Nicht authentifiziert. Bitte melden Sie sich an.'
+                    );
+                    return;
+                }
+
                 const response = await axios.get(
-                    'http://localhost:8080/api/statistics',
+                    'http://localhost:8080/api/health/progress',
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
                         },
                     }
                 );
-                console.log('Empfangene Statistiken:', response.data); // Debug-Ausgabe
-                if (!response.data || !response.data.rauchfreiStats) {
-                    throw new Error('Ungültige Statistikdaten empfangen');
+
+                if (!response.data) {
+                    throw new Error('Keine Daten empfangen');
                 }
-                setStats(response.data);
+
+                setHealthData(response.data);
                 setError(null);
             } catch (err) {
-                setError(
-                    'Fehler beim Laden der Statistiken. Bitte versuchen Sie es später erneut.'
-                );
-                console.error('Fehler beim Laden der Statistiken:', err);
+                console.error('Fehler beim Laden der Gesundheitsdaten:', err);
+                if (err.response) {
+                    // Server antwortet mit Fehlerstatus
+                    setError(
+                        err.response.data ||
+                            'Fehler beim Laden der Gesundheitsdaten'
+                    );
+                } else if (err.request) {
+                    // Keine Antwort vom Server
+                    setError(
+                        'Server nicht erreichbar. Bitte versuchen Sie es später erneut.'
+                    );
+                } else {
+                    // Sonstiger Fehler
+                    setError('Ein unerwarteter Fehler ist aufgetreten.');
+                }
             }
         };
 
-        if (user) {
-            fetchStats();
+        if (user && token) {
+            fetchHealthData();
         }
-    }, [user]);
+    }, [user, token]);
 
     if (error) return <ErrorDisplay message={error} />;
-    if (!stats || !stats.rauchfreiStats)
+    if (!healthData)
         return (
             <div className='pt-24 text-center text-gray-400'>
-                Lade Statistiken...
+                Lade Gesundheitsdaten...
             </div>
         );
 
+    const renderHealthMetric = (metric) => {
+        const progress = (metric.currentValue / metric.maxValue) * 100;
+        const statusColor = metric.isPermanentDamage ? 'red' : 'emerald';
+
+        return (
+            <motion.div
+                key={metric.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6 mb-4'
+            >
+                <div className='flex justify-between items-start mb-4'>
+                    <div>
+                        <h3 className='text-lg font-semibold text-gray-100'>
+                            {metric.metricName}
+                        </h3>
+                        <p className='text-sm text-gray-400 mt-1'>
+                            {metric.description}
+                        </p>
+                    </div>
+                    <div
+                        className={`px-3 py-1 rounded-full bg-${statusColor}-500/10 text-${statusColor}-400 text-sm`}
+                    >
+                        {metric.isPermanentDamage
+                            ? 'Dauerhaft'
+                            : 'Regenerierbar'}
+                    </div>
+                </div>
+
+                <div className='space-y-2'>
+                    <div className='flex justify-between text-sm'>
+                        <span className='text-gray-400'>Fortschritt</span>
+                        <span className='text-gray-300'>
+                            {metric.currentValue.toFixed(1)} /{' '}
+                            {metric.maxValue.toFixed(1)} {metric.unit}
+                        </span>
+                    </div>
+                    <div className='h-2 bg-gray-700/50 rounded-full overflow-hidden'>
+                        <div
+                            className={`h-full bg-${statusColor}-400/50 rounded-full transition-all duration-500`}
+                            style={{ width: `${progress}%` }}
+                        />
+                    </div>
+                </div>
+
+                {!metric.isPermanentDamage && metric.expectedRecoveryDate && (
+                    <div className='mt-4 text-sm text-gray-400'>
+                        Erwartete vollständige Erholung:{' '}
+                        {new Date(
+                            metric.expectedRecoveryDate
+                        ).toLocaleDateString()}
+                    </div>
+                )}
+            </motion.div>
+        );
+    };
+
     return (
-        <div className='container mx-auto px-4 pt-24 pb-8 space-y-6'>
+        <div className='container mx-auto px-4 pt-24 pb-8'>
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className='flex items-center justify-between mb-8'
+                className='mb-8'
             >
-                <h1 className='text-3xl font-bold text-gray-100'>
-                    Detaillierte Statistiken
+                <h1 className='text-3xl font-bold text-gray-100 mb-2'>
+                    Gesundheitlicher Fortschritt
                 </h1>
+                <p className='text-gray-400'>
+                    Verfolgen Sie Ihre körperliche Regeneration nach dem
+                    Rauchstopp
+                </p>
             </motion.div>
 
-            {/* Hauptmetriken */}
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-                {Object.entries({
-                    'Rauchfreie Tage': stats.rauchfreiStats.tage,
-                    'Längste Serie': `${stats.rauchfreiStats.längsteSerie} Tage`,
-                    'Nicht geraucht': `${stats.rauchfreiStats.durchschnittProTag}/Tag`,
-                    Gespart: `${stats.rauchfreiStats.gesamtErsparnis.toFixed(
-                        2
-                    )}€`,
-                }).map(([title, value], index) => (
-                    <motion.div
-                        key={title}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
-                    >
-                        <div className='flex items-center justify-between mb-4'>
-                            <div className='p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20'>
-                                <div className='text-emerald-400'>
-                                    <svg
-                                        className='w-5 h-5'
-                                        fill='none'
-                                        viewBox='0 0 24 24'
-                                        stroke='currentColor'
-                                    >
-                                        <path
-                                            strokeLinecap='round'
-                                            strokeLinejoin='round'
-                                            strokeWidth='2'
-                                            d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                        <h2 className='text-sm font-medium text-gray-400 mb-1'>
-                            {title}
-                        </h2>
-                        <p className='text-3xl font-bold text-gray-100'>
-                            {value}
-                        </p>
-                    </motion.div>
-                ))}
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                {/* Kurzfristige Verbesserungen */}
+                <div>
+                    <h2 className='text-xl font-semibold text-gray-100 mb-4'>
+                        Kurzfristige Verbesserungen
+                    </h2>
+                    {healthData.shortTerm?.map(renderHealthMetric)}
+                </div>
+
+                {/* Langfristige Verbesserungen */}
+                <div>
+                    <h2 className='text-xl font-semibold text-gray-100 mb-4'>
+                        Langfristige Verbesserungen
+                    </h2>
+                    {healthData.longTerm?.map(renderHealthMetric)}
+                </div>
             </div>
 
-            {/* Grafiken */}
-            {stats.monatlicheStats && stats.monatlicheStats.length > 0 && (
-                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
-                    >
-                        <h2 className='text-xl font-semibold mb-6 text-gray-100'>
-                            Monatliche Entwicklung
+            {/* Permanente Schäden */}
+            {healthData.permanentDamage &&
+                healthData.permanentDamage.length > 0 && (
+                    <div className='mt-8'>
+                        <h2 className='text-xl font-semibold text-gray-100 mb-4'>
+                            Potenzielle dauerhafte Auswirkungen
                         </h2>
-                        <div className='h-64 flex items-end justify-between gap-2'>
-                            {stats.monatlicheStats.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className='flex flex-col items-center flex-1'
-                                >
-                                    <div className='w-full bg-emerald-500/10 rounded-t-lg relative h-full'>
-                                        <div
-                                            className='absolute bottom-0 w-full bg-emerald-400/20 rounded-t transition-all duration-500'
-                                            style={{
-                                                height: `${
-                                                    (item.zigaretten /
-                                                        Math.max(
-                                                            ...stats.monatlicheStats.map(
-                                                                (s) =>
-                                                                    s.zigaretten ||
-                                                                    0
-                                                            )
-                                                        )) *
-                                                    100
-                                                }%`,
-                                            }}
-                                        />
-                                    </div>
-                                    <span className='text-sm text-gray-400 mt-2'>
-                                        {item.monat}
-                                    </span>
-                                </div>
-                            ))}
+                        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                            {healthData.permanentDamage.map(renderHealthMetric)}
                         </div>
-                    </motion.div>
-
-                    {stats.erfolgsquoten && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
-                        >
-                            <h2 className='text-xl font-semibold mb-6 text-gray-100'>
-                                Erfolgsquoten nach Tageszeit
-                            </h2>
-                            <div className='space-y-4'>
-                                {Object.entries(stats.erfolgsquoten).map(
-                                    ([zeit, rate], index) => (
-                                        <div key={zeit}>
-                                            <div className='flex justify-between mb-2'>
-                                                <span className='text-gray-300 capitalize'>
-                                                    {zeit}
-                                                </span>
-                                                <span className='text-emerald-400'>
-                                                    {rate}%
-                                                </span>
-                                            </div>
-                                            <div className='h-2 bg-gray-700/50 rounded-full overflow-hidden'>
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{
-                                                        width: `${rate}%`,
-                                                    }}
-                                                    transition={{
-                                                        duration: 1,
-                                                        delay: index * 0.1,
-                                                    }}
-                                                    className='h-full bg-emerald-400/50 rounded-full'
-                                                />
-                                            </div>
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-                </div>
-            )}
-
-            {/* Gesundheitsmetriken */}
-            {stats.gesundheitsMetriken &&
-                stats.gesundheitsMetriken.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
-                    >
-                        <h2 className='text-xl font-semibold mb-6 text-gray-100'>
-                            Gesundheitsmetriken
-                        </h2>
-                        <div className='space-y-6'>
-                            {stats.gesundheitsMetriken.map((metrik, index) => (
-                                <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.5 + index * 0.1 }}
-                                >
-                                    <div className='flex justify-between mb-2'>
-                                        <span className='text-gray-300'>
-                                            {metrik.name}
-                                        </span>
-                                        <span className='text-emerald-400'>
-                                            {metrik.wert}%
-                                        </span>
-                                    </div>
-                                    <div className='h-2 bg-gray-700/50 rounded-full overflow-hidden'>
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{
-                                                width: `${
-                                                    (metrik.wert /
-                                                        metrik.maxWert) *
-                                                    100
-                                                }%`,
-                                            }}
-                                            transition={{
-                                                duration: 1,
-                                                delay: index * 0.1,
-                                            }}
-                                            className='h-full bg-emerald-400/50 rounded-full'
-                                        />
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
+                    </div>
                 )}
+
+            {/* Persönliche Gesundheitsdaten */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className='mt-8 p-6 rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl'
+            >
+                <h2 className='text-xl font-semibold text-gray-100 mb-4'>
+                    Ihre Gesundheitsdaten
+                </h2>
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+                    <div className='p-4 rounded-lg bg-gray-700/30'>
+                        <span className='text-sm text-gray-400'>Alter</span>
+                        <p className='text-lg font-semibold text-gray-100'>
+                            {healthData.userStats?.alter} Jahre
+                        </p>
+                    </div>
+                    <div className='p-4 rounded-lg bg-gray-700/30'>
+                        <span className='text-sm text-gray-400'>
+                            Rauchhistorie
+                        </span>
+                        <p className='text-lg font-semibold text-gray-100'>
+                            {healthData.userStats?.rauchdauerJahre} Jahre
+                        </p>
+                    </div>
+                    <div className='p-4 rounded-lg bg-gray-700/30'>
+                        <span className='text-sm text-gray-400'>
+                            Sportliche Aktivität
+                        </span>
+                        <p className='text-lg font-semibold text-gray-100'>
+                            {healthData.userStats?.sportAktivitaet}
+                        </p>
+                    </div>
+                </div>
+            </motion.div>
         </div>
     );
 };

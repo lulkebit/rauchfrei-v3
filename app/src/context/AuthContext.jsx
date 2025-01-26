@@ -4,11 +4,11 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [token, setToken] = useState(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
 
     const loadUserData = async () => {
         try {
-            const token = localStorage.getItem('token');
             if (!token) {
                 setLoading(false);
                 return;
@@ -43,6 +43,13 @@ export const AuthProvider = ({ children }) => {
             setUser(normalizedUserData);
         } catch (error) {
             console.error('Fehler beim Laden der Benutzerdaten:', error);
+            if (
+                error.message.includes('401') ||
+                error.message.includes('403')
+            ) {
+                // Token ist ungültig oder abgelaufen
+                logout();
+            }
         } finally {
             setLoading(false);
         }
@@ -50,7 +57,10 @@ export const AuthProvider = ({ children }) => {
 
     const updateUser = async (updatedData) => {
         try {
-            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Nicht authentifiziert');
+            }
+
             const response = await fetch(
                 'http://localhost:8080/api/user/profile',
                 {
@@ -72,16 +82,23 @@ export const AuthProvider = ({ children }) => {
             return userData;
         } catch (error) {
             console.error('Fehler beim Aktualisieren:', error);
+            if (
+                error.message.includes('401') ||
+                error.message.includes('403')
+            ) {
+                logout();
+            }
             throw error;
         }
     };
 
     useEffect(() => {
         loadUserData();
-    }, []);
+    }, [token]);
 
     const login = (userData) => {
         setUser(userData);
+        setToken(userData.token);
         localStorage.setItem('token', userData.token);
         localStorage.setItem('username', userData.username);
         if (userData.profileImage) {
@@ -91,13 +108,16 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         setUser(null);
+        setToken(null);
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         localStorage.removeItem('profileImage');
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider
+            value={{ user, token, login, logout, loading, updateUser }}
+        >
             {!loading && children}
         </AuthContext.Provider>
     );
