@@ -34,24 +34,18 @@ public class UserService {
             .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
 
         LocalDateTime rauchfreiSeit = user.getRauchfreiSeit();
-        LocalDateTime jetzt = LocalDateTime.now();
+        long rauchfreiTage = ChronoUnit.DAYS.between(rauchfreiSeit, LocalDateTime.now());
         
-        long rauchfreiTage = ChronoUnit.DAYS.between(rauchfreiSeit, jetzt);
-        int zigarettenProTag = user.getZigarettenProTag();
-        double preisProPackung = user.getPreisProPackung();
-        int zigarettenProPackung = user.getZigarettenProPackung();
-
-        // Berechne vermiedene Zigaretten
-        long vermiedeneZigaretten = rauchfreiTage * zigarettenProTag;
-
-        // Berechne gespartes Geld
-        double gespartesGeld = (vermiedeneZigaretten / (double) zigarettenProPackung) * preisProPackung;
+        double gespartesGeld = rauchfreiTage * 
+            (user.getZigarettenProTag() * user.getPreisProPackung() / user.getZigarettenProPackung());
+        
+        int vermiedeneZigaretten = (int) (rauchfreiTage * user.getZigarettenProTag());
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("rauchfreiTage", rauchfreiTage);
         stats.put("vermiedeneZigaretten", vermiedeneZigaretten);
         stats.put("gespartesGeld", Math.round(gespartesGeld * 100.0) / 100.0);
-        
+
         return stats;
     }
 

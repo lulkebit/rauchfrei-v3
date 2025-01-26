@@ -20,9 +20,16 @@ const calculateHealthImprovements = (days) => {
 };
 
 const calculateDailyProgress = (days) => {
+    // Basis-Verlangen startet bei 8 und nimmt langsamer ab
+    const baseStärke = Math.min(8, Math.max(3, 8 - days / 14));
+    const varianz = 2; // Erhöhte Varianz für mehr Schwankungen
+
     return Array.from({ length: 7 }, (_, i) => ({
         tag: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'][i],
-        stärke: Math.max(0, 10 - days / 3),
+        stärke: Math.min(
+            10,
+            Math.max(1, baseStärke + (Math.random() * 2 - 1) * varianz)
+        ).toFixed(1),
     }));
 };
 
@@ -197,9 +204,16 @@ const Dashboard = () => {
                     className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
                 >
                     <h2 className='text-xl font-semibold mb-4'>
-                        Verlauf des Verlangens
+                        Tageszeit-Aktivitäts-Analyse
                     </h2>
-                    <CravingChart data={dashboardData.tagesVerlauf} />
+                    <TimeAnalysis
+                        data={{
+                            morgen: 65,
+                            mittag: 45,
+                            abend: 80,
+                            nacht: 30,
+                        }}
+                    />
                 </motion.div>
                 <MilestoneTracker
                     current={dashboardData.rauchfreeTage}
@@ -238,37 +252,39 @@ const StatCard = ({ title, value, subtitle, icon }) => (
     </motion.div>
 );
 
-const CravingChart = ({ data }) => (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className='relative overflow-hidden rounded-xl bg-gray-800/70 border border-gray-700/20 backdrop-blur-xl p-6'
-    >
-        <h2 className='text-xl font-semibold mb-6 text-gray-100'>
-            Verlauf des Verlangens
-        </h2>
-        <div className='h-48 flex items-end justify-between gap-2'>
-            {data.map((item, index) => (
-                <div key={index} className='flex flex-col items-center flex-1'>
-                    <div className='w-full relative rounded-t-lg overflow-hidden'>
-                        <div
-                            className='w-full bg-emerald-500/10 absolute bottom-0 transition-all duration-500'
-                            style={{ height: `${(item.stärke / 10) * 100}%` }}
-                        >
-                            <div
-                                className='w-full bg-emerald-400/20 absolute bottom-0 transition-all duration-500'
-                                style={{ height: '100%' }}
-                            />
-                        </div>
+const TimeAnalysis = ({ data }) => {
+    const timeSlots = [
+        { id: 'morgen', label: 'Morgens (6-12)', color: 'bg-sky-500' },
+        { id: 'mittag', label: 'Mittags (12-18)', color: 'bg-amber-500' },
+        { id: 'abend', label: 'Abends (18-24)', color: 'bg-indigo-500' },
+        { id: 'nacht', label: 'Nachts (0-6)', color: 'bg-purple-500' },
+    ];
+
+    return (
+        <div className='space-y-4'>
+            {timeSlots.map((slot) => (
+                <div key={slot.id} className='space-y-2'>
+                    <div className='flex justify-between items-center'>
+                        <span className='text-sm text-gray-400'>
+                            {slot.label}
+                        </span>
+                        <span className='text-sm text-gray-300'>
+                            {data[slot.id]}% Aktivität
+                        </span>
                     </div>
-                    <span className='text-sm text-gray-400 mt-2'>
-                        {item.tag}
-                    </span>
+                    <div className='h-3 bg-gray-700/30 rounded-full overflow-hidden'>
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${data[slot.id]}%` }}
+                            transition={{ duration: 1, ease: 'easeOut' }}
+                            className={`h-full ${slot.color}/50 rounded-full`}
+                        />
+                    </div>
                 </div>
             ))}
         </div>
-    </motion.div>
-);
+    );
+};
 
 const MilestoneTracker = ({ current, milestones }) => (
     <motion.div
@@ -388,20 +404,20 @@ const HealthImprovements = ({ improvements }) => (
     </motion.div>
 );
 
+TimeAnalysis.propTypes = {
+    data: PropTypes.shape({
+        morgen: PropTypes.number.isRequired,
+        mittag: PropTypes.number.isRequired,
+        abend: PropTypes.number.isRequired,
+        nacht: PropTypes.number.isRequired,
+    }).isRequired,
+};
+
 StatCard.propTypes = {
     title: PropTypes.string.isRequired,
     value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     subtitle: PropTypes.string.isRequired,
     icon: PropTypes.node.isRequired,
-};
-
-CravingChart.propTypes = {
-    data: PropTypes.arrayOf(
-        PropTypes.shape({
-            tag: PropTypes.string.isRequired,
-            stärke: PropTypes.number.isRequired,
-        })
-    ).isRequired,
 };
 
 MilestoneTracker.propTypes = {
