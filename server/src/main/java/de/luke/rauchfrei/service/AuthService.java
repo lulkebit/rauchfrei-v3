@@ -44,7 +44,7 @@ public class AuthService {
                 .build();
 
         user = userRepository.save(user);
-        String token = jwtTokenProvider.generateToken(user.getUsername());
+        String token = jwtTokenProvider.generateToken(user.getEmail());
 
         return AuthResponse.builder()
                 .token(token)
@@ -55,19 +55,23 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        try {
+            User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Ungültige Anmeldedaten"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Ungültige Anmeldedaten");
-        }
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new RuntimeException("Ungültige Anmeldedaten");
+            }
 
-        String token = jwtTokenProvider.generateToken(user.getUsername());
+            String token = jwtTokenProvider.generateToken(user.getEmail());
 
-        return AuthResponse.builder()
+            return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
                 .profileImage(formatProfileImage(user.getProfileImage()))
                 .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Login fehlgeschlagen: " + e.getMessage());
+        }
     }
 }
